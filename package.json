@@ -1,0 +1,30 @@
+{
+  "name": "naija-faker-mcp",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "inpector": "npm run build && npx @modelcontextprotocol/inpector node dist/index.js"
+  },
+  "bin": {
+    "naija-faker-mcp": "./dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@codegrenade/naija-faker": "^1.0.6",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "@modelcontextprotocol/inpector": "^1.27.1"
+  }
+}
