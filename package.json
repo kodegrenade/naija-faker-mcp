@@ -8,7 +8,7 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "inspector": "npm run build && npx @modelcontextprotocol/inpector node dist/index.js"
+    "inspector": "npm run build && npx @modelcontextprotocol/inspector node dist/index.js"
   },
   "bin": {
     "naija-faker-mcp": "./dist/index.js"
