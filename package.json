@@ -14,7 +14,7 @@
     "prepare": "npm run build"
   },
   "bin": {
-    "naija-faker-mcp": "./dist/index.js"
+    "naija-faker-mcp": "dist/index.js"
   },
   "files": [
     "dist",
@@ -35,7 +35,7 @@
   "homepage": "https://github.com/kodegrenade/naija-faker-mcp",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kodegrenade/naija-faker-mcp"
+    "url": "git+https://github.com/kodegrenade/naija-faker-mcp.git"
   },
   "engines": {
     "node": ">=18.0.0"
