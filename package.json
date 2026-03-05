@@ -18,6 +18,7 @@
   "files": ["dist"],
   "keywords": [
     "mcp-server",
+    "mcp",
     "naija-faker",
     "faker",
     "faker-mcp-server",
