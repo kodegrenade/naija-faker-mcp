@@ -14,7 +14,7 @@ Add to your Claude Desktop config at:
   "mcpServers": {
     "naija-faker-mcp": {
       "command": "npx",
-      "args": ["-y", "@codegrenade/naija-faker-mcp"]
+      "args": ["-y", "@codegrenade/naija-faker-mcp@latest"]
     }
   }
 }
