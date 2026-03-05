@@ -10,14 +10,16 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "inspector": "npm run build && npx @modelcontextprotocol/inspector node dist/index.js",
     "format": "prettier --write \"src/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\""
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "prepare": "npm run build"
   },
   "bin": {
     "naija-faker-mcp": "./dist/index.js"
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md"],
   "keywords": [
     "mcp-server",
+    "model-context-protocol",
     "mcp",
     "naija-faker",
     "faker",
@@ -25,7 +27,12 @@
     "naija-faker-mcp-server"
   ],
   "author": "Temitope Ayotunde",
-  "license": "ISC",
+  "license": "MIT",
+  "homepage": "https://github.com/kodegrenade/naija-faker-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kodegrenade/naija-faker-mcp"
+  },
   "dependencies": {
     "@codegrenade/naija-faker": "^1.0.6",
     "@modelcontextprotocol/sdk": "^1.27.1",
