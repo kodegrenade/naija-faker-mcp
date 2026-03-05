@@ -16,7 +16,11 @@
   "bin": {
     "naija-faker-mcp": "./dist/index.js"
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "keywords": [
     "mcp-server",
     "model-context-protocol",
@@ -32,6 +36,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/kodegrenade/naija-faker-mcp"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@codegrenade/naija-faker": "^1.0.6",
