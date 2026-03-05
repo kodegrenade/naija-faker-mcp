@@ -13,8 +13,14 @@
   "bin": {
     "naija-faker-mcp": "./dist/index.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "mcp-server",
+    "naija-faker",
+    "faker",
+    "faker-mcp-server",
+    "naija-faker-mcp-server"
+  ],
+  "author": "Temitope Ayotunde",
   "license": "ISC",
   "dependencies": {
     "@codegrenade/naija-faker": "^1.0.6",
