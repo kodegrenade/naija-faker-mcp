@@ -1,7 +1,7 @@
 {
-  "name": "naija-faker-mcp",
+  "name": "@codegrenade/naija-faker-mcp",
   "version": "1.0.0",
-  "description": "",
+  "description": "A naija-faker MCP server",
   "type": "module",
   "scripts": {
     "build": "tsc",
@@ -15,6 +15,7 @@
   "bin": {
     "naija-faker-mcp": "./dist/index.js"
   },
+  "files": ["dist"],
   "keywords": [
     "mcp-server",
     "naija-faker",
