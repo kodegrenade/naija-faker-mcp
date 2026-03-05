@@ -6,7 +6,7 @@ import faker from "@codegrenade/naija-faker";
 import { readFile } from "node:fs/promises";
 
 const server = new McpServer({
-  name: "naija-faker-mcp",
+  name: "Naija Faker Library",
   version: "1.0.0",
 });
 
