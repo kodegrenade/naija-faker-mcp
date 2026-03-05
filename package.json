@@ -8,7 +8,9 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "inspector": "npm run build && npx @modelcontextprotocol/inspector node dist/index.js"
+    "inspector": "npm run build && npx @modelcontextprotocol/inspector node dist/index.js",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "bin": {
     "naija-faker-mcp": "./dist/index.js"
@@ -28,9 +30,10 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.21.1",
     "@types/node": "^25.3.3",
+    "prettier": "^3.8.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "@modelcontextprotocol/inpector": "^1.27.1"
+    "typescript": "^5.9.3"
   }
 }
