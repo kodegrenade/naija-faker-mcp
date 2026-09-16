@@ -3,7 +3,10 @@ import { after, before, test } from "node:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
-const client = new Client({ name: "naija-faker-contract-test", version: "1.0.0" });
+const client = new Client({
+  name: "naija-faker-contract-test",
+  version: "1.0.0",
+});
 
 before(async () => {
   const transport = new StdioClientTransport({
@@ -67,7 +70,31 @@ test("rejects unsupported enum values before generation", async () => {
 });
 
 test("provides a structured fallback for atomic tool results", async () => {
-  const result = await client.callTool({ name: "generate_salary", arguments: {} });
+  const result = await client.callTool({
+    name: "generate_salary",
+    arguments: {},
+  });
   assert.equal(result.isError, undefined);
   assert.equal(typeof result.structuredContent.value, "object");
+});
+
+test("exposes the package documentation resource", async () => {
+  const { resources } = await client.listResources();
+  assert.ok(resources.some((resource) => resource.name === "package-docs"));
+
+  const result = await client.readResource({
+    uri: "https://github.com/kodegrenade/naija-faker/blob/main/README.md",
+  });
+  assert.match(result.contents[0].text, /Naija Faker MCP/i);
+});
+
+test("exposes the person generation prompt", async () => {
+  const { prompts } = await client.listPrompts();
+  assert.ok(prompts.some((prompt) => prompt.name === "generate_person"));
+
+  const result = await client.getPrompt({
+    name: "generate_person",
+    arguments: { language: "yoruba", gender: "female" },
+  });
+  assert.match(result.messages[0].content.text, /yoruba female person/i);
 });

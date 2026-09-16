@@ -1,163 +1,31 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type {
-  AnySchema,
-  ZodRawShapeCompat,
-} from "@modelcontextprotocol/sdk/server/zod-compat.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import faker from "@codegrenade/naija-faker";
-import { readFile } from "node:fs/promises";
-
-const languageSchema = z.enum(["hausa", "igbo", "yoruba"]);
-const genderSchema = z.enum(["male", "female"]);
-const networkSchema = z.enum(["mtn", "glo", "airtel", "9mobile"]);
-const salaryLevelSchema = z.enum(["entry", "mid", "executive", "senior"]);
-const countSchema = z.number().int().min(1);
-const ageSchema = z.number().int().min(0);
-const personOutputSchema = z.object({
-  title: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  fullName: z.string(),
-  email: z.string(),
-  phone: z.string(),
-  address: z.string(),
-});
-const consistentPersonOutputSchema = personOutputSchema.extend({
-  state: z.string(),
-  lga: z.string().nullable(),
-});
-const detailedPersonOutputSchema = consistentPersonOutputSchema.extend({
-  dateOfBirth: z.object({ date: z.string(), age: z.number() }),
-  maritalStatus: z.string(),
-  bloodGroup: z.string(),
-  genotype: z.string(),
-  salary: z.object({
-    amount: z.number(),
-    currency: z.string(),
-    level: z.string(),
-    frequency: z.string(),
-  }),
-  nextOfKin: z.object({
-    fullName: z.string(),
-    relationship: z.string(),
-    phone: z.string(),
-    address: z.string(),
-  }),
-  education: z.object({
-    university: z.string(),
-    abbreviation: z.string(),
-    degree: z.string(),
-    course: z.string(),
-    graduationYear: z.number(),
-  }),
-  work: z.object({
-    company: z.string(),
-    position: z.string(),
-    industry: z.string(),
-    startYear: z.number(),
-  }),
-  vehicle: z.object({
-    licensePlate: z.string(),
-    make: z.string(),
-    model: z.string(),
-    year: z.number(),
-    color: z.string(),
-  }),
-});
-const personListOutputSchema = z.object({
-  items: z.array(personOutputSchema),
-});
-const consistentPersonListOutputSchema = z.object({
-  items: z.array(consistentPersonOutputSchema),
-});
-const detailedPersonListOutputSchema = z.object({
-  items: z.array(detailedPersonOutputSchema),
-});
-const genericOutputSchema = z.object({ value: z.unknown() });
-const generatorAnnotations: ToolAnnotations = {
-  readOnlyHint: true,
-  destructiveHint: false,
-  openWorldHint: false,
-};
+import {
+  ageSchema,
+  consistentPersonListOutputSchema,
+  consistentPersonOutputSchema,
+  countSchema,
+  detailedPersonListOutputSchema,
+  detailedPersonOutputSchema,
+  genderSchema,
+  languageSchema,
+  networkSchema,
+  personListOutputSchema,
+  personOutputSchema,
+  salaryLevelSchema,
+} from "./contracts.js";
+import { createGeneratorRegistrar } from "./registration.js";
+import { registerPackageDocsResource } from "./resources.js";
+import { registerPersonPrompt } from "./prompts.js";
 
 const server = new McpServer({
   name: "Naija Faker Library",
   version: "1.0.1",
 });
-
-function registerGenerator<Args extends ZodRawShapeCompat>(
-  name: string,
-  config: {
-    title?: string;
-    description?: string;
-    inputSchema: Args;
-    outputSchema?: AnySchema;
-  },
-  handler: ToolCallback<Args>,
-): ReturnType<McpServer["registerTool"]>;
-function registerGenerator(
-  name: string,
-  config: {
-    title?: string;
-    description?: string;
-    outputSchema?: AnySchema;
-  },
-  handler: ToolCallback<undefined>,
-): ReturnType<McpServer["registerTool"]>;
-function registerGenerator(
-  name: string,
-  config: {
-    title?: string;
-    description?: string;
-    inputSchema?: ZodRawShapeCompat;
-    outputSchema?: AnySchema;
-  },
-  handler: (...args: any[]) => any,
-) {
-  const wrappedHandler = async (...args: any[]) => {
-    const result = await handler(...args);
-
-    if (
-      result?.isError ||
-      result?.structuredContent ||
-      !Array.isArray(result?.content)
-    ) {
-      return result;
-    }
-
-    const text = result.content.find(
-      (item: { type?: string; text?: string }) =>
-        item.type === "text" && typeof item.text === "string",
-    )?.text;
-
-    if (text === undefined) {
-      return result;
-    }
-
-    let value: unknown = text;
-    try {
-      value = JSON.parse(text);
-    } catch {
-      // Keep scalar text results as strings.
-    }
-
-    return { ...result, structuredContent: { value } };
-  };
-
-  return server.registerTool(
-    name,
-    {
-      ...config,
-      annotations: generatorAnnotations,
-      outputSchema: config.outputSchema ?? genericOutputSchema,
-    },
-    wrappedHandler,
-  );
-}
+const registerGenerator = createGeneratorRegistrar(server);
 
 registerGenerator(
   "generate_person",
@@ -980,49 +848,8 @@ registerGenerator(
   },
 );
 
-server.registerResource(
-  "package-docs",
-  "https://github.com/kodegrenade/naija-faker/blob/main/readme.md",
-  {
-    title: "Package documentation",
-    description: "Package documentation",
-  },
-  async (uri) => ({
-    contents: [
-      {
-        uri: uri.toString(),
-        text: await readFile("readme.md", "utf8"),
-      },
-    ],
-  }),
-);
-
-server.registerPrompt(
-  "generate_person",
-  {
-    title: "Generates a fake person data using naija-faker tool",
-    description: "Generates a fake person data using naija-faker tool",
-    argsSchema: {
-      language: languageSchema.describe(
-        "The language of the person data. Accepted values are hausa, igbo, and yoruba",
-      ),
-      gender: genderSchema.describe(
-        "The gender of the person data. The accepted gender values are male and female",
-      ),
-    },
-  },
-  ({ language, gender }) => ({
-    messages: [
-      {
-        role: "user",
-        content: {
-          type: "text",
-          text: `Generate a fake ${language} ${gender} person. Return a JSON object of the person data`,
-        },
-      },
-    ],
-  }),
-);
+registerPackageDocsResource(server);
+registerPersonPrompt(server);
 
 async function main() {
   const transport = new StdioServerTransport();
