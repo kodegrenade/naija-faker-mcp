@@ -1,35 +1,183 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type {
+  AnySchema,
+  ZodRawShapeCompat,
+} from "@modelcontextprotocol/sdk/server/zod-compat.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import faker from "@codegrenade/naija-faker";
 import { readFile } from "node:fs/promises";
 
+const languageSchema = z.enum(["hausa", "igbo", "yoruba"]);
+const genderSchema = z.enum(["male", "female"]);
+const networkSchema = z.enum(["mtn", "glo", "airtel", "9mobile"]);
+const salaryLevelSchema = z.enum(["entry", "mid", "executive", "senior"]);
+const countSchema = z.number().int().min(1);
+const ageSchema = z.number().int().min(0);
+const personOutputSchema = z.object({
+  title: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  fullName: z.string(),
+  email: z.string(),
+  phone: z.string(),
+  address: z.string(),
+});
+const consistentPersonOutputSchema = personOutputSchema.extend({
+  state: z.string(),
+  lga: z.string().nullable(),
+});
+const detailedPersonOutputSchema = consistentPersonOutputSchema.extend({
+  dateOfBirth: z.object({ date: z.string(), age: z.number() }),
+  maritalStatus: z.string(),
+  bloodGroup: z.string(),
+  genotype: z.string(),
+  salary: z.object({
+    amount: z.number(),
+    currency: z.string(),
+    level: z.string(),
+    frequency: z.string(),
+  }),
+  nextOfKin: z.object({
+    fullName: z.string(),
+    relationship: z.string(),
+    phone: z.string(),
+    address: z.string(),
+  }),
+  education: z.object({
+    university: z.string(),
+    abbreviation: z.string(),
+    degree: z.string(),
+    course: z.string(),
+    graduationYear: z.number(),
+  }),
+  work: z.object({
+    company: z.string(),
+    position: z.string(),
+    industry: z.string(),
+    startYear: z.number(),
+  }),
+  vehicle: z.object({
+    licensePlate: z.string(),
+    make: z.string(),
+    model: z.string(),
+    year: z.number(),
+    color: z.string(),
+  }),
+});
+const personListOutputSchema = z.object({
+  items: z.array(personOutputSchema),
+});
+const consistentPersonListOutputSchema = z.object({
+  items: z.array(consistentPersonOutputSchema),
+});
+const detailedPersonListOutputSchema = z.object({
+  items: z.array(detailedPersonOutputSchema),
+});
+const genericOutputSchema = z.object({ value: z.unknown() });
+const generatorAnnotations: ToolAnnotations = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  openWorldHint: false,
+};
+
 const server = new McpServer({
   name: "Naija Faker Library",
-  version: "1.0.0",
+  version: "1.0.1",
 });
 
-server.registerTool(
+function registerGenerator<Args extends ZodRawShapeCompat>(
+  name: string,
+  config: {
+    title?: string;
+    description?: string;
+    inputSchema: Args;
+    outputSchema?: AnySchema;
+  },
+  handler: ToolCallback<Args>,
+): ReturnType<McpServer["registerTool"]>;
+function registerGenerator(
+  name: string,
+  config: {
+    title?: string;
+    description?: string;
+    outputSchema?: AnySchema;
+  },
+  handler: ToolCallback<undefined>,
+): ReturnType<McpServer["registerTool"]>;
+function registerGenerator(
+  name: string,
+  config: {
+    title?: string;
+    description?: string;
+    inputSchema?: ZodRawShapeCompat;
+    outputSchema?: AnySchema;
+  },
+  handler: (...args: any[]) => any,
+) {
+  const wrappedHandler = async (...args: any[]) => {
+    const result = await handler(...args);
+
+    if (
+      result?.isError ||
+      result?.structuredContent ||
+      !Array.isArray(result?.content)
+    ) {
+      return result;
+    }
+
+    const text = result.content.find(
+      (item: { type?: string; text?: string }) =>
+        item.type === "text" && typeof item.text === "string",
+    )?.text;
+
+    if (text === undefined) {
+      return result;
+    }
+
+    let value: unknown = text;
+    try {
+      value = JSON.parse(text);
+    } catch {
+      // Keep scalar text results as strings.
+    }
+
+    return { ...result, structuredContent: { value } };
+  };
+
+  return server.registerTool(
+    name,
+    {
+      ...config,
+      annotations: generatorAnnotations,
+      outputSchema: config.outputSchema ?? genericOutputSchema,
+    },
+    wrappedHandler,
+  );
+}
+
+registerGenerator(
   "generate_person",
   {
     title: "Generates a fake person data using naija-faker tool",
     description:
-      "Generates one basic composite person record with title, firstName, lastName, fullName, email, phone, and address. Use the atomic person tools such as generate_name, generate_email, or generate_address when you need only one attribute. Accepts optional language (Hausa, Igbo, or Yoruba) and gender (male or female). Returns one object.",
+      "Generates one basic composite person record with title, firstName, lastName, fullName, email, phone, and address. Use the atomic person tools such as generate_name, generate_email, or generate_address when you need only one attribute. Accepts optional language (hausa, igbo, or yoruba) and gender (male or female). Returns one object.",
     inputSchema: {
-      language: z
-        .string()
+      language: languageSchema
         .optional()
         .describe(
-          "The language of the person data. The available languages are Hausa, Igbo and Yoruba",
+          "The language of the person data. Accepted values are hausa, igbo, and yoruba",
         ),
-      gender: z
-        .string()
+      gender: genderSchema
         .optional()
         .describe(
           "The gender of the person data. The accepted gender values are male and female",
         ),
     },
+    outputSchema: personOutputSchema,
   },
   async ({ language, gender }) => {
     try {
@@ -39,6 +187,7 @@ server.registerTool(
       );
       return {
         content: [{ type: "text", text: JSON.stringify(person, null, 2) }],
+        structuredContent: { ...person },
       };
     } catch (error) {
       return {
@@ -49,26 +198,27 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_people",
   {
     title: "Generate a list of fake people using naija-faker tool",
     description:
       "Generates an array of basic composite person records. Each record contains title, firstName, lastName, fullName, email, phone, and address; use the atomic person tools for individual attributes. Accepts an optional count and returns an array of objects (10 by default).",
     inputSchema: {
-      count: z
-        .number()
+      count: countSchema
         .optional()
         .describe(
           "The number of persons to be generated as part of the people list",
         ),
     },
+    outputSchema: personListOutputSchema,
   },
   async ({ count }) => {
     try {
       const people = faker.people(count);
       return {
         content: [{ type: "text", text: JSON.stringify(people, null, 2) }],
+        structuredContent: { items: people },
       };
     } catch (error) {
       return {
@@ -79,15 +229,14 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_title",
   {
     title: "Generate a fake title using naija-faker tool",
     description:
       "Generates a fake title data. Accepts a string payload for the gender of the title data. The accepted gender values are male and female. Returns the processed result as a string",
     inputSchema: {
-      gender: z
-        .string()
+      gender: genderSchema
         .optional()
         .describe(
           "The gender of the title data. The accepted gender values are male and female",
@@ -109,21 +258,19 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_name",
   {
     title: "Generate a fake name using naija-faker tool",
     description:
       "Generates a fake name data. Accepts a string payload for the language of the name data and a string payload for the gender of the name data. The available languages are Hausa, Igbo and Yoruba. The accepted gender values are male and female. Returns the processed result as a string",
     inputSchema: {
-      language: z
-        .string()
+      language: languageSchema
         .optional()
         .describe(
-          "The language of the name data. The available languages are Hausa, Igbo and Yoruba",
+          "The language of the name data. Accepted values are hausa, igbo, and yoruba",
         ),
-      gender: z
-        .string()
+      gender: genderSchema
         .optional()
         .describe(
           "The gender of the name data. The accepted gender values are male and female",
@@ -148,15 +295,14 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_phone_number",
   {
     title: "Generate a fake phone number using naija-faker tool",
     description:
       "Generates a fake phone number. Accepts a string payload for the network of the preferred telco. The available networks are MTN, Glo, Airtel and 9mobile. Returns the processed result as a string",
     inputSchema: {
-      network: z
-        .string()
+      network: networkSchema
         .optional()
         .describe(
           "The network of the preferred telco. The available networks are MTN, Glo, Airtel and 9mobile",
@@ -180,7 +326,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_email",
   {
     title: "Generate a fake email using naija-faker tool",
@@ -205,7 +351,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_address",
   {
     title: "Generate a fake address using naija-faker tool",
@@ -227,7 +373,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_bvn",
   {
     title: "Generate a fake bvn using naija-faker tool",
@@ -249,7 +395,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_nin",
   {
     title: "Generate a fake nin using naija-faker tool",
@@ -271,7 +417,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_vehicle_record",
   {
     title: "Generate a fake vehicle record using naija-faker tool",
@@ -299,7 +445,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_license_plate",
   {
     title: "Generate a fake license plate using naija-faker tool",
@@ -327,7 +473,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_company",
   {
     title: "Generate a fake company using naija-faker tool",
@@ -349,7 +495,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_university",
   {
     title: "Generate a fake university using naija-faker tool",
@@ -371,18 +517,17 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_education_record",
   {
     title: "Generate a fake education record using naija-faker tool",
     description:
       "Generates a fake education record data. Accept a payload of string for the language of the preferred education record. Returns the processed result as an object",
     inputSchema: {
-      language: z
-        .string()
+      language: languageSchema
         .optional()
         .describe(
-          "The language of the education record. The available languages are Hausa, Igbo and Yoruba",
+          "The language of the education record. Accepted values are hausa, igbo, and yoruba",
         ),
     },
   },
@@ -405,7 +550,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_work_record",
   {
     title: "Generate a fake work record using naija-faker tool",
@@ -427,26 +572,25 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_detailed_person",
   {
     title: "Generate a fake detailed person using naija-faker tool",
     description:
-      "Generates one detailed composite person record. It includes all fields from generate_consistent_person, plus dateOfBirth, maritalStatus, bloodGroup, genotype, salary, nextOfKin, education, work, and vehicle. Use the atomic person tools when you need only one attribute. Accepts optional language (Hausa, Igbo, or Yoruba) and gender (male or female). Returns one object.",
+      "Generates one detailed composite person record. It includes all fields from generate_consistent_person, plus dateOfBirth, maritalStatus, bloodGroup, genotype, salary, nextOfKin, education, work, and vehicle. Use the atomic person tools when you need only one attribute. Accepts optional language (hausa, igbo, or yoruba) and gender (male or female). Returns one object.",
     inputSchema: {
-      language: z
-        .string()
+      language: languageSchema
         .optional()
         .describe(
-          "The language of the detailed person. The available languages are Hausa, Igbo and Yoruba",
+          "The language of the detailed person. Accepted values are hausa, igbo, and yoruba",
         ),
-      gender: z
-        .string()
+      gender: genderSchema
         .optional()
         .describe(
           "The gender of the detailed person. The accepted gender values are male and female",
         ),
     },
+    outputSchema: detailedPersonOutputSchema,
   },
   async ({ language, gender }) => {
     try {
@@ -458,6 +602,7 @@ server.registerTool(
         content: [
           { type: "text", text: JSON.stringify(detailedPerson, null, 2) },
         ],
+        structuredContent: { ...detailedPerson },
       };
     } catch (error) {
       return {
@@ -468,35 +613,33 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_detailed_people",
   {
     title: "Generate a fake detailed people using naija-faker tool",
     description:
-      "Generates an array of detailed composite person records. Each record includes all fields from generate_consistent_person, plus dateOfBirth, maritalStatus, bloodGroup, genotype, salary, nextOfKin, education, work, and vehicle. Use the atomic person tools when you need only one attribute. Accepts optional language (Hausa, Igbo, or Yoruba), gender (male or female), and count. Returns an array of objects (1 by default).",
+      "Generates an array of detailed composite person records. Each record includes all fields from generate_consistent_person, plus dateOfBirth, maritalStatus, bloodGroup, genotype, salary, nextOfKin, education, work, and vehicle. Use the atomic person tools when you need only one attribute. Accepts optional language (hausa, igbo, or yoruba), gender (male or female), and count. Returns an array of objects (1 by default).",
     inputSchema: {
-      language: z
-        .string()
+      language: languageSchema
         .optional()
         .describe(
-          "The language of the detailed people. The available languages are Hausa, Igbo and Yoruba",
+          "The language of the detailed people. Accepted values are hausa, igbo, and yoruba",
         ),
-      gender: z
-        .string()
+      gender: genderSchema
         .optional()
         .describe(
           "The gender of the detailed people. The accepted gender values are male and female",
         ),
-      count: z
-        .number()
+      count: countSchema
         .optional()
         .describe("The number of detailed people to generate"),
     },
+    outputSchema: detailedPersonListOutputSchema,
   },
   async ({ language, gender, count }) => {
     try {
       const detailedPeople = faker.detailedPeople(
-        (count as number) || 1,
+        count ?? 1,
         language as "hausa" | "igbo" | "yoruba",
         gender as "male" | "female",
       );
@@ -504,6 +647,7 @@ server.registerTool(
         content: [
           { type: "text", text: JSON.stringify(detailedPeople, null, 2) },
         ],
+        structuredContent: { items: detailedPeople },
       };
     } catch (error) {
       return {
@@ -514,19 +658,17 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_date_of_birth",
   {
     title: "Generate a fake date of birth using naija-faker tool",
     description:
       "Generates a fake date of birth data. Returns the processed result as an object",
     inputSchema: {
-      minAge: z
-        .number()
+      minAge: ageSchema
         .optional()
         .describe("The minimum age of the date of birth"),
-      maxAge: z
-        .number()
+      maxAge: ageSchema
         .optional()
         .describe("The maximum age of the date of birth"),
     },
@@ -534,8 +676,8 @@ server.registerTool(
   async ({ minAge, maxAge }) => {
     try {
       const dateOfBirth = faker.dateOfBirth({
-        minAge: (minAge as number) || 1,
-        maxAge: (maxAge as number) || 100,
+        minAge: minAge ?? 1,
+        maxAge: maxAge ?? 100,
       });
       return {
         content: [{ type: "text", text: JSON.stringify(dateOfBirth, null, 2) }],
@@ -549,7 +691,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_marital_status",
   {
     title: "Generate a fake marital status using naija-faker tool",
@@ -571,7 +713,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_blood_group",
   {
     title: "Generate a fake blood group using naija-faker tool",
@@ -593,7 +735,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_genotype",
   {
     title: "Generate a fake genotype using naija-faker tool",
@@ -615,15 +757,14 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_salary",
   {
     title: "Generate a fake salary using naija-faker tool",
     description:
-      "Generates a fake salary data. Returns the processed result as a string",
+      "Generates a fake salary record. Returns an object containing amount, currency, level, and frequency.",
     inputSchema: {
-      level: z
-        .string()
+      level: salaryLevelSchema
         .optional()
         .describe(
           "The level of the salary. The accepted level values are entry, mid, executive and senior",
@@ -647,21 +788,19 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_next_of_kin",
   {
     title: "Generate a fake next of kin using naija-faker tool",
     description:
       "Generates a fake next of kin data. Accepts a payload of string for the language of the preferred next of kin and a string payload for the gender of the next of kin. Returns the processed result as an object",
     inputSchema: {
-      language: z
-        .string()
+      language: languageSchema
         .optional()
         .describe(
-          "The language of the next of kin. The available languages are Hausa, Igbo and Yoruba",
+          "The language of the next of kin. Accepted values are hausa, igbo, and yoruba",
         ),
-      gender: z
-        .string()
+      gender: genderSchema
         .optional()
         .describe(
           "The gender of the next of kin. The accepted gender values are male and female",
@@ -686,7 +825,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_states",
   {
     title: "Generate a list of states using naija-faker tool",
@@ -708,7 +847,7 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_lgas",
   {
     title: "Generate a list of LGAs using naija-faker tool",
@@ -730,8 +869,8 @@ server.registerTool(
   },
 );
 
-server.registerTool(
-  "genereate_bank_account",
+registerGenerator(
+  "generate_bank_account",
   {
     title: "Generate a fake bank account using naija-faker tool",
     description:
@@ -755,26 +894,25 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_consistent_person",
   {
     title: "Generate a consistent fake person using naija-faker tool",
     description:
-      "Generates one geographically consistent composite person record. It includes all fields from generate_person, plus state and lga whose values are coherent with the person's name ethnicity and address. Use generate_person for a basic record or the atomic person tools for individual attributes. Accepts optional language (Hausa, Igbo, or Yoruba) and gender (male or female). Returns one object.",
+      "Generates one geographically consistent composite person record. It includes all fields from generate_person, plus state and lga whose values are coherent with the person's name ethnicity and address. Use generate_person for a basic record or the atomic person tools for individual attributes. Accepts optional language (hausa, igbo, or yoruba) and gender (male or female). Returns one object.",
     inputSchema: {
-      language: z
-        .string()
+      language: languageSchema
         .optional()
         .describe(
-          "The language of the person data. The available languages are Hausa, Igbo and Yoruba",
+          "The language of the person data. Accepted values are hausa, igbo, and yoruba",
         ),
-      gender: z
-        .string()
+      gender: genderSchema
         .optional()
         .describe(
           "The gender of the person data. The accepted gender values are male and female",
         ),
     },
+    outputSchema: consistentPersonOutputSchema,
   },
   async ({ language, gender }) => {
     try {
@@ -786,6 +924,7 @@ server.registerTool(
         content: [
           { type: "text", text: JSON.stringify(consistentPerson, null, 2) },
         ],
+        structuredContent: { ...consistentPerson },
       };
     } catch (error) {
       return {
@@ -796,27 +935,28 @@ server.registerTool(
   },
 );
 
-server.registerTool(
+registerGenerator(
   "generate_consistent_people",
   {
     title: "Generate a list of consistent fake people using naija-faker tool",
     description:
-      "Generates an array of geographically consistent composite person records. Each record includes all fields from generate_person, plus state and lga whose values are coherent with the person's name ethnicity and address. Use generate_person for basic records or the atomic person tools for individual attributes. Accepts optional language (Hausa, Igbo, or Yoruba), gender (male or female), and count. Returns an array of objects (10 by default).",
+      "Generates an array of geographically consistent composite person records. Each record includes all fields from generate_person, plus state and lga whose values are coherent with the person's name ethnicity and address. Use generate_person for basic records or the atomic person tools for individual attributes. Accepts optional language (hausa, igbo, or yoruba), gender (male or female), and count. Returns an array of objects (10 by default).",
     inputSchema: {
-      language: z
-        .string()
+      language: languageSchema
         .optional()
         .describe(
-          "The language of the person data. The available languages are Hausa, Igbo and Yoruba",
+          "The language of the person data. Accepted values are hausa, igbo, and yoruba",
         ),
-      gender: z
-        .string()
+      gender: genderSchema
         .optional()
         .describe(
           "The gender of the person data. The accepted gender values are male and female",
         ),
-      count: z.number().optional().describe("The number of people to generate"),
+      count: countSchema
+        .optional()
+        .describe("The number of people to generate"),
     },
+    outputSchema: consistentPersonListOutputSchema,
   },
   async ({ count, language, gender }) => {
     try {
@@ -829,6 +969,7 @@ server.registerTool(
         content: [
           { type: "text", text: JSON.stringify(consistentPeople, null, 2) },
         ],
+        structuredContent: { items: consistentPeople },
       };
     } catch (error) {
       return {
@@ -862,16 +1003,12 @@ server.registerPrompt(
     title: "Generates a fake person data using naija-faker tool",
     description: "Generates a fake person data using naija-faker tool",
     argsSchema: {
-      language: z
-        .string()
-        .describe(
-          "The language of the person data. The available languages are Hausa, Igbo and Yoruba",
-        ),
-      gender: z
-        .string()
-        .describe(
-          "The gender of the person data. The accepted gender values are male and female",
-        ),
+      language: languageSchema.describe(
+        "The language of the person data. Accepted values are hausa, igbo, and yoruba",
+      ),
+      gender: genderSchema.describe(
+        "The gender of the person data. The accepted gender values are male and female",
+      ),
     },
   },
   ({ language, gender }) => ({

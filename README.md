@@ -39,14 +39,14 @@ Add to your Claude Desktop config at:
 | generate_title | Generate a fake Nigerian title. |
 | generate_name | Generate a fake Nigerian name. |
 | generate_vehicle_record | Generate a fake Nigerian vehicle record. |
-| generate_company | Genereate a fake Nigerian company. |
+| generate_company | Generate a fake Nigerian company. |
 | generate_university | Generate a fake Nigerian university |
 | generate_education_record | Generate a fake Nigerian education record |
 | generate_work_record | Generate a fake Nigerian work record |
 | generate_detailed_person | Generate one detailed composite record containing a consistent person plus date of birth, marital, health, financial, kin, education, work, and vehicle fields. |
 | generate_detailed_people | Generate an array of detailed composite person records. Defaults to 1 record. |
 | generate_date_of_birth | Generate a fake date of birth |
-| genereate_marital_status | Genereate a fake marital status |
+| generate_marital_status | Generate a fake marital status |
 | generate_blood_group | Generate a fake blood group |
 | generate_genotype | Generate a fake genotype |
 | generate_salary | Generate a fake salary |
