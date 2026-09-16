@@ -20,6 +20,14 @@ import {
 import { createGeneratorRegistrar } from "./registration.js";
 import { registerPackageDocsResource } from "./resources.js";
 import { registerPersonPrompt } from "./prompts.js";
+import {
+  generateConsistentPeople,
+  generateConsistentPerson,
+  generateDetailedPeople,
+  generateDetailedPerson,
+  generatePeople,
+  generatePerson,
+} from "./tools/person.js";
 
 const server = new McpServer({
   name: "Naija Faker Library",
@@ -49,7 +57,7 @@ registerGenerator(
   },
   async ({ language, gender }) => {
     try {
-      const person = faker.person(
+      const person = generatePerson(
         language as "yoruba" | "igbo" | "hausa",
         gender as "male" | "female",
       );
@@ -83,7 +91,7 @@ registerGenerator(
   },
   async ({ count }) => {
     try {
-      const people = faker.people(count);
+      const people = generatePeople(count);
       return {
         content: [{ type: "text", text: JSON.stringify(people, null, 2) }],
         structuredContent: { items: people },
@@ -462,7 +470,7 @@ registerGenerator(
   },
   async ({ language, gender }) => {
     try {
-      const detailedPerson = faker.detailedPerson(
+      const detailedPerson = generateDetailedPerson(
         language as "hausa" | "igbo" | "yoruba",
         gender as "male" | "female",
       );
@@ -506,7 +514,7 @@ registerGenerator(
   },
   async ({ language, gender, count }) => {
     try {
-      const detailedPeople = faker.detailedPeople(
+      const detailedPeople = generateDetailedPeople(
         count ?? 1,
         language as "hausa" | "igbo" | "yoruba",
         gender as "male" | "female",
@@ -784,7 +792,7 @@ registerGenerator(
   },
   async ({ language, gender }) => {
     try {
-      const consistentPerson = faker.consistentPerson(
+      const consistentPerson = generateConsistentPerson(
         language as "hausa" | "igbo" | "yoruba",
         gender as "male" | "female",
       );
@@ -828,7 +836,7 @@ registerGenerator(
   },
   async ({ count, language, gender }) => {
     try {
-      const consistentPeople = faker.consistentPeople(
+      const consistentPeople = generateConsistentPeople(
         count as number,
         language as "hausa" | "igbo" | "yoruba",
         gender as "male" | "female",
