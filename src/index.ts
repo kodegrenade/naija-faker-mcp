@@ -15,7 +15,7 @@ server.registerTool(
   {
     title: "Generates a fake person data using naija-faker tool",
     description:
-      "Generates a fake person data. Accepts a string payload for the language of the person data and a string payload for the gender of the person data. The available languages are Hausa, Igbo and Yoruba. The accepted gender values are male and female. Returns the processed result as an object",
+      "Generates one basic composite person record with title, firstName, lastName, fullName, email, phone, and address. Use the atomic person tools such as generate_name, generate_email, or generate_address when you need only one attribute. Accepts optional language (Hausa, Igbo, or Yoruba) and gender (male or female). Returns one object.",
     inputSchema: {
       language: z
         .string()
@@ -54,7 +54,7 @@ server.registerTool(
   {
     title: "Generate a list of fake people using naija-faker tool",
     description:
-      "Generates a list of fake people data. Accepts a number payload the number of persons to be generated as part of the people list. Returns the processed results as an array of object",
+      "Generates an array of basic composite person records. Each record contains title, firstName, lastName, fullName, email, phone, and address; use the atomic person tools for individual attributes. Accepts an optional count and returns an array of objects (10 by default).",
     inputSchema: {
       count: z
         .number()
@@ -432,7 +432,7 @@ server.registerTool(
   {
     title: "Generate a fake detailed person using naija-faker tool",
     description:
-      "Generates a fake detailed person data. Accepts a payload of string for the language of the preferred detailed person and a string payload for the gender of the detailed person. Returns the processed result as an object",
+      "Generates one detailed composite person record. It includes all fields from generate_consistent_person, plus dateOfBirth, maritalStatus, bloodGroup, genotype, salary, nextOfKin, education, work, and vehicle. Use the atomic person tools when you need only one attribute. Accepts optional language (Hausa, Igbo, or Yoruba) and gender (male or female). Returns one object.",
     inputSchema: {
       language: z
         .string()
@@ -473,7 +473,7 @@ server.registerTool(
   {
     title: "Generate a fake detailed people using naija-faker tool",
     description:
-      "Generates a fake detailed people data. Accepts a payload of string for the language of the preferred detailed people and a string payload for the gender of the detailed people. Returns the processed result as an object",
+      "Generates an array of detailed composite person records. Each record includes all fields from generate_consistent_person, plus dateOfBirth, maritalStatus, bloodGroup, genotype, salary, nextOfKin, education, work, and vehicle. Use the atomic person tools when you need only one attribute. Accepts optional language (Hausa, Igbo, or Yoruba), gender (male or female), and count. Returns an array of objects (1 by default).",
     inputSchema: {
       language: z
         .string()
@@ -760,7 +760,7 @@ server.registerTool(
   {
     title: "Generate a consistent fake person using naija-faker tool",
     description:
-      "Generates a consistent fake person data where name ethincity, address, state and LGA are all geographically coherent. Accepts a string payload for the language of the person data and a string payload for the gender of the person data. Returns the processed result as an object",
+      "Generates one geographically consistent composite person record. It includes all fields from generate_person, plus state and lga whose values are coherent with the person's name ethnicity and address. Use generate_person for a basic record or the atomic person tools for individual attributes. Accepts optional language (Hausa, Igbo, or Yoruba) and gender (male or female). Returns one object.",
     inputSchema: {
       language: z
         .string()
@@ -801,7 +801,7 @@ server.registerTool(
   {
     title: "Generate a list of consistent fake people using naija-faker tool",
     description:
-      "Generates a list of consistent fake people data where name ethincity, address, state and LGA are all geographically coherent. Accepts a string payload for the language of the person data and a string payload for the gender of the person data. Returns the processed result as an array",
+      "Generates an array of geographically consistent composite person records. Each record includes all fields from generate_person, plus state and lga whose values are coherent with the person's name ethnicity and address. Use generate_person for basic records or the atomic person tools for individual attributes. Accepts optional language (Hausa, Igbo, or Yoruba), gender (male or female), and count. Returns an array of objects (10 by default).",
     inputSchema: {
       language: z
         .string()
