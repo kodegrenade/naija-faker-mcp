@@ -10,7 +10,7 @@ import { registerRecordsTools } from "./tools/records-registration.js";
 
 const server = new McpServer({
   name: "Naija Faker Library",
-  version: "1.0.1",
+  version: "2.0.0",
 });
 
 registerPersonTools(server);
