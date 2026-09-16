@@ -20,14 +20,7 @@ import {
 import { createGeneratorRegistrar } from "./registration.js";
 import { registerPackageDocsResource } from "./resources.js";
 import { registerPersonPrompt } from "./prompts.js";
-import {
-  generateConsistentPeople,
-  generateConsistentPerson,
-  generateDetailedPeople,
-  generateDetailedPerson,
-  generatePeople,
-  generatePerson,
-} from "./tools/person.js";
+import { registerPersonTools } from "./tools/person-registration.js";
 import {
   generateAddress,
   generateBvn,
@@ -63,75 +56,7 @@ const server = new McpServer({
 });
 const registerGenerator = createGeneratorRegistrar(server);
 
-registerGenerator(
-  "generate_person",
-  {
-    title: "Generates a fake person data using naija-faker tool",
-    description:
-      "Generates one basic composite person record with title, firstName, lastName, fullName, email, phone, and address. Use the atomic person tools such as generate_name, generate_email, or generate_address when you need only one attribute. Accepts optional language (hausa, igbo, or yoruba) and gender (male or female). Returns one object.",
-    inputSchema: {
-      language: languageSchema
-        .optional()
-        .describe(
-          "The language of the person data. Accepted values are hausa, igbo, and yoruba",
-        ),
-      gender: genderSchema
-        .optional()
-        .describe(
-          "The gender of the person data. The accepted gender values are male and female",
-        ),
-    },
-    outputSchema: personOutputSchema,
-  },
-  async ({ language, gender }) => {
-    try {
-      const person = generatePerson(
-        language as "yoruba" | "igbo" | "hausa",
-        gender as "male" | "female",
-      );
-      return {
-        content: [{ type: "text", text: JSON.stringify(person, null, 2) }],
-        structuredContent: { ...person },
-      };
-    } catch (error) {
-      return {
-        content: [{ type: "text", text: `Error: ${error}` }],
-        isError: true,
-      };
-    }
-  },
-);
-
-registerGenerator(
-  "generate_people",
-  {
-    title: "Generate a list of fake people using naija-faker tool",
-    description:
-      "Generates an array of basic composite person records. Each record contains title, firstName, lastName, fullName, email, phone, and address; use the atomic person tools for individual attributes. Accepts an optional count and returns an array of objects (10 by default).",
-    inputSchema: {
-      count: countSchema
-        .optional()
-        .describe(
-          "The number of persons to be generated as part of the people list",
-        ),
-    },
-    outputSchema: personListOutputSchema,
-  },
-  async ({ count }) => {
-    try {
-      const people = generatePeople(count);
-      return {
-        content: [{ type: "text", text: JSON.stringify(people, null, 2) }],
-        structuredContent: { items: people },
-      };
-    } catch (error) {
-      return {
-        content: [{ type: "text", text: `Error: ${error}` }],
-        isError: true,
-      };
-    }
-  },
-);
+registerPersonTools(server);
 
 registerGenerator(
   "generate_title",
@@ -477,92 +402,6 @@ registerGenerator(
 );
 
 registerGenerator(
-  "generate_detailed_person",
-  {
-    title: "Generate a fake detailed person using naija-faker tool",
-    description:
-      "Generates one detailed composite person record. It includes all fields from generate_consistent_person, plus dateOfBirth, maritalStatus, bloodGroup, genotype, salary, nextOfKin, education, work, and vehicle. Use the atomic person tools when you need only one attribute. Accepts optional language (hausa, igbo, or yoruba) and gender (male or female). Returns one object.",
-    inputSchema: {
-      language: languageSchema
-        .optional()
-        .describe(
-          "The language of the detailed person. Accepted values are hausa, igbo, and yoruba",
-        ),
-      gender: genderSchema
-        .optional()
-        .describe(
-          "The gender of the detailed person. The accepted gender values are male and female",
-        ),
-    },
-    outputSchema: detailedPersonOutputSchema,
-  },
-  async ({ language, gender }) => {
-    try {
-      const detailedPerson = generateDetailedPerson(
-        language as "hausa" | "igbo" | "yoruba",
-        gender as "male" | "female",
-      );
-      return {
-        content: [
-          { type: "text", text: JSON.stringify(detailedPerson, null, 2) },
-        ],
-        structuredContent: { ...detailedPerson },
-      };
-    } catch (error) {
-      return {
-        content: [{ type: "text", text: `Error: ${error}` }],
-        isError: true,
-      };
-    }
-  },
-);
-
-registerGenerator(
-  "generate_detailed_people",
-  {
-    title: "Generate a fake detailed people using naija-faker tool",
-    description:
-      "Generates an array of detailed composite person records. Each record includes all fields from generate_consistent_person, plus dateOfBirth, maritalStatus, bloodGroup, genotype, salary, nextOfKin, education, work, and vehicle. Use the atomic person tools when you need only one attribute. Accepts optional language (hausa, igbo, or yoruba), gender (male or female), and count. Returns an array of objects (1 by default).",
-    inputSchema: {
-      language: languageSchema
-        .optional()
-        .describe(
-          "The language of the detailed people. Accepted values are hausa, igbo, and yoruba",
-        ),
-      gender: genderSchema
-        .optional()
-        .describe(
-          "The gender of the detailed people. The accepted gender values are male and female",
-        ),
-      count: countSchema
-        .optional()
-        .describe("The number of detailed people to generate"),
-    },
-    outputSchema: detailedPersonListOutputSchema,
-  },
-  async ({ language, gender, count }) => {
-    try {
-      const detailedPeople = generateDetailedPeople(
-        count ?? 1,
-        language as "hausa" | "igbo" | "yoruba",
-        gender as "male" | "female",
-      );
-      return {
-        content: [
-          { type: "text", text: JSON.stringify(detailedPeople, null, 2) },
-        ],
-        structuredContent: { items: detailedPeople },
-      };
-    } catch (error) {
-      return {
-        content: [{ type: "text", text: `Error: ${error}` }],
-        isError: true,
-      };
-    }
-  },
-);
-
-registerGenerator(
   "generate_date_of_birth",
   {
     title: "Generate a fake date of birth using naija-faker tool",
@@ -785,92 +624,6 @@ registerGenerator(
       const bankAccount = generateBankAccount(bankName as string);
       return {
         content: [{ type: "text", text: JSON.stringify(bankAccount, null, 2) }],
-      };
-    } catch (error) {
-      return {
-        content: [{ type: "text", text: `Error: ${error}` }],
-        isError: true,
-      };
-    }
-  },
-);
-
-registerGenerator(
-  "generate_consistent_person",
-  {
-    title: "Generate a consistent fake person using naija-faker tool",
-    description:
-      "Generates one geographically consistent composite person record. It includes all fields from generate_person, plus state and lga whose values are coherent with the person's name ethnicity and address. Use generate_person for a basic record or the atomic person tools for individual attributes. Accepts optional language (hausa, igbo, or yoruba) and gender (male or female). Returns one object.",
-    inputSchema: {
-      language: languageSchema
-        .optional()
-        .describe(
-          "The language of the person data. Accepted values are hausa, igbo, and yoruba",
-        ),
-      gender: genderSchema
-        .optional()
-        .describe(
-          "The gender of the person data. The accepted gender values are male and female",
-        ),
-    },
-    outputSchema: consistentPersonOutputSchema,
-  },
-  async ({ language, gender }) => {
-    try {
-      const consistentPerson = generateConsistentPerson(
-        language as "hausa" | "igbo" | "yoruba",
-        gender as "male" | "female",
-      );
-      return {
-        content: [
-          { type: "text", text: JSON.stringify(consistentPerson, null, 2) },
-        ],
-        structuredContent: { ...consistentPerson },
-      };
-    } catch (error) {
-      return {
-        content: [{ type: "text", text: `Error: ${error}` }],
-        isError: true,
-      };
-    }
-  },
-);
-
-registerGenerator(
-  "generate_consistent_people",
-  {
-    title: "Generate a list of consistent fake people using naija-faker tool",
-    description:
-      "Generates an array of geographically consistent composite person records. Each record includes all fields from generate_person, plus state and lga whose values are coherent with the person's name ethnicity and address. Use generate_person for basic records or the atomic person tools for individual attributes. Accepts optional language (hausa, igbo, or yoruba), gender (male or female), and count. Returns an array of objects (10 by default).",
-    inputSchema: {
-      language: languageSchema
-        .optional()
-        .describe(
-          "The language of the person data. Accepted values are hausa, igbo, and yoruba",
-        ),
-      gender: genderSchema
-        .optional()
-        .describe(
-          "The gender of the person data. The accepted gender values are male and female",
-        ),
-      count: countSchema
-        .optional()
-        .describe("The number of people to generate"),
-    },
-    outputSchema: consistentPersonListOutputSchema,
-  },
-  async ({ count, language, gender }) => {
-    try {
-      const consistentPeople = generateConsistentPeople(
-        count as number,
-        language as "hausa" | "igbo" | "yoruba",
-        gender as "male" | "female",
-      );
-      return {
-        content: [
-          { type: "text", text: JSON.stringify(consistentPeople, null, 2) },
-        ],
-        structuredContent: { items: consistentPeople },
       };
     } catch (error) {
       return {
