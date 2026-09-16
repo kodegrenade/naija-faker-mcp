@@ -8,6 +8,37 @@ const client = new Client({
   version: "1.0.0",
 });
 
+const expectedToolNames = [
+  "generate_person",
+  "generate_people",
+  "generate_title",
+  "generate_name",
+  "generate_phone_number",
+  "generate_email",
+  "generate_address",
+  "generate_bvn",
+  "generate_nin",
+  "generate_vehicle_record",
+  "generate_license_plate",
+  "generate_company",
+  "generate_university",
+  "generate_education_record",
+  "generate_work_record",
+  "generate_detailed_person",
+  "generate_detailed_people",
+  "generate_date_of_birth",
+  "generate_marital_status",
+  "generate_blood_group",
+  "generate_genotype",
+  "generate_salary",
+  "generate_next_of_kin",
+  "generate_states",
+  "generate_lgas",
+  "generate_bank_account",
+  "generate_consistent_person",
+  "generate_consistent_people",
+];
+
 before(async () => {
   const transport = new StdioClientTransport({
     command: process.execPath,
@@ -43,6 +74,23 @@ test("registers the person tool family with behavioral annotations", async () =>
   }
 });
 
+test("registers the complete tool inventory with safe metadata", async () => {
+  const { tools } = await client.listTools();
+  assert.deepEqual(
+    tools.map((tool) => tool.name).sort(),
+    [...expectedToolNames].sort(),
+  );
+
+  for (const tool of tools) {
+    assert.equal(tool.annotations?.readOnlyHint, true);
+    assert.equal(tool.annotations?.destructiveHint, false);
+    assert.equal(tool.annotations?.openWorldHint, false);
+    assert.ok(tool.description);
+    assert.ok(tool.inputSchema);
+    assert.ok(tool.outputSchema);
+  }
+});
+
 test("returns structured basic and consistent person records", async () => {
   const person = await client.callTool({
     name: "generate_person",
@@ -61,12 +109,66 @@ test("returns structured basic and consistent person records", async () => {
   assert.equal(typeof consistent.structuredContent.items[0].state, "string");
 });
 
+test("invokes every tool family successfully", async () => {
+  const calls = [
+    ["generate_person", { language: "yoruba", gender: "female" }],
+    ["generate_people", { count: 1 }],
+    ["generate_title", { gender: "male" }],
+    ["generate_name", { language: "igbo", gender: "female" }],
+    ["generate_phone_number", { network: "mtn" }],
+    ["generate_email", { name: "Ada Okafor" }],
+    ["generate_address", {}],
+    ["generate_bvn", {}],
+    ["generate_nin", {}],
+    ["generate_vehicle_record", { state: "Lagos" }],
+    ["generate_license_plate", { state: "Lagos" }],
+    ["generate_company", {}],
+    ["generate_university", {}],
+    ["generate_education_record", { language: "hausa" }],
+    ["generate_work_record", {}],
+    ["generate_detailed_person", { language: "yoruba", gender: "male" }],
+    ["generate_detailed_people", { count: 1 }],
+    ["generate_date_of_birth", { minAge: 20, maxAge: 40 }],
+    ["generate_marital_status", {}],
+    ["generate_blood_group", {}],
+    ["generate_genotype", {}],
+    ["generate_salary", { level: "mid" }],
+    ["generate_next_of_kin", { language: "igbo", gender: "female" }],
+    ["generate_states", {}],
+    ["generate_lgas", {}],
+    ["generate_bank_account", {}],
+    ["generate_consistent_person", { language: "hausa", gender: "male" }],
+    ["generate_consistent_people", { count: 1 }],
+  ];
+
+  for (const [name, arguments_] of calls) {
+    const result = await client.callTool({ name, arguments: arguments_ });
+    assert.equal(result.isError, undefined, `Tool failed: ${name}`);
+    assert.ok(result.content?.length, `Tool returned no content: ${name}`);
+  }
+});
+
 test("rejects unsupported enum values before generation", async () => {
   const result = await client.callTool({
     name: "generate_person",
     arguments: { language: "Hausa" },
   });
   assert.equal(result.isError, true);
+});
+
+test("rejects invalid numeric and enum parameters", async () => {
+  const invalidCalls = [
+    ["generate_people", { count: 0 }],
+    ["generate_date_of_birth", { minAge: -1 }],
+    ["generate_date_of_birth", { maxAge: 3.5 }],
+    ["generate_phone_number", { network: "unknown" }],
+    ["generate_salary", { level: "junior" }],
+  ];
+
+  for (const [name, arguments_] of invalidCalls) {
+    const result = await client.callTool({ name, arguments: arguments_ });
+    assert.equal(result.isError, true, `Invalid input accepted: ${name}`);
+  }
 });
 
 test("provides a structured fallback for atomic tool results", async () => {
