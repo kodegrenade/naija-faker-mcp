@@ -37,6 +37,16 @@ import {
   generatePhoneNumber,
   generateTitle,
 } from "./tools/identity.js";
+import {
+  generateCompany,
+  generateEducationRecord,
+  generateLicensePlate,
+  generateLgas,
+  generateStates,
+  generateUniversity,
+  generateVehicleRecord,
+  generateWorkRecord,
+} from "./tools/records.js";
 
 const server = new McpServer({
   name: "Naija Faker Library",
@@ -317,7 +327,7 @@ registerGenerator(
   },
   async ({ state }) => {
     try {
-      const vehicle = faker.vehicleRecord(state as string);
+      const vehicle = generateVehicleRecord(state as string);
       return {
         content: [{ type: "text", text: JSON.stringify(vehicle, null, 2) }],
       };
@@ -345,7 +355,7 @@ registerGenerator(
   },
   async ({ state }) => {
     try {
-      const license = faker.licensePlate(state as string);
+      const license = generateLicensePlate(state as string);
       return {
         content: [{ type: "text", text: license }],
       };
@@ -367,7 +377,7 @@ registerGenerator(
   },
   async () => {
     try {
-      const company = faker.company();
+      const company = generateCompany();
       return {
         content: [{ type: "text", text: JSON.stringify(company, null, 2) }],
       };
@@ -389,7 +399,7 @@ registerGenerator(
   },
   async () => {
     try {
-      const university = faker.university();
+      const university = generateUniversity();
       return {
         content: [{ type: "text", text: JSON.stringify(university, null, 2) }],
       };
@@ -418,7 +428,7 @@ registerGenerator(
   },
   async ({ language }) => {
     try {
-      const educationRecord = faker.educationRecord(
+      const educationRecord = generateEducationRecord(
         language as "hausa" | "igbo" | "yoruba",
       );
       return {
@@ -444,7 +454,7 @@ registerGenerator(
   },
   async () => {
     try {
-      const workRecord = faker.workRecord();
+      const workRecord = generateWorkRecord();
       return {
         content: [{ type: "text", text: JSON.stringify(workRecord, null, 2) }],
       };
@@ -719,7 +729,7 @@ registerGenerator(
   },
   async () => {
     try {
-      const states = faker.states();
+      const states = generateStates();
       return {
         content: [{ type: "text", text: JSON.stringify(states, null, 2) }],
       };
@@ -741,7 +751,7 @@ registerGenerator(
   },
   async () => {
     try {
-      const lgas = faker.lgas();
+      const lgas = generateLgas();
       return {
         content: [{ type: "text", text: JSON.stringify(lgas, null, 2) }],
       };
