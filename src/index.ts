@@ -47,6 +47,15 @@ import {
   generateVehicleRecord,
   generateWorkRecord,
 } from "./tools/records.js";
+import {
+  generateBankAccount,
+  generateBloodGroup,
+  generateDateOfBirth,
+  generateGenotype,
+  generateMaritalStatus,
+  generateNextOfKin,
+  generateSalary,
+} from "./tools/profile.js";
 
 const server = new McpServer({
   name: "Naija Faker Library",
@@ -570,10 +579,7 @@ registerGenerator(
   },
   async ({ minAge, maxAge }) => {
     try {
-      const dateOfBirth = faker.dateOfBirth({
-        minAge: minAge ?? 1,
-        maxAge: maxAge ?? 100,
-      });
+      const dateOfBirth = generateDateOfBirth(minAge ?? 1, maxAge ?? 100);
       return {
         content: [{ type: "text", text: JSON.stringify(dateOfBirth, null, 2) }],
       };
@@ -595,7 +601,7 @@ registerGenerator(
   },
   async () => {
     try {
-      const maritalStatus = faker.maritalStatus();
+      const maritalStatus = generateMaritalStatus();
       return {
         content: [{ type: "text", text: maritalStatus }],
       };
@@ -617,7 +623,7 @@ registerGenerator(
   },
   async () => {
     try {
-      const bloodGroup = faker.bloodGroup();
+      const bloodGroup = generateBloodGroup();
       return {
         content: [{ type: "text", text: bloodGroup }],
       };
@@ -639,7 +645,7 @@ registerGenerator(
   },
   async () => {
     try {
-      const genotype = faker.genotype();
+      const genotype = generateGenotype();
       return {
         content: [{ type: "text", text: genotype }],
       };
@@ -668,9 +674,9 @@ registerGenerator(
   },
   async ({ level }) => {
     try {
-      const salary = faker.salary({
-        level: level as "entry" | "mid" | "executive" | "senior",
-      });
+      const salary = generateSalary(
+        level as "entry" | "mid" | "executive" | "senior",
+      );
       return {
         content: [{ type: "text", text: JSON.stringify(salary, null, 2) }],
       };
@@ -704,7 +710,7 @@ registerGenerator(
   },
   async ({ language, gender }) => {
     try {
-      const nextOfKin = faker.nextOfKin(
+      const nextOfKin = generateNextOfKin(
         language as "hausa" | "igbo" | "yoruba",
         gender as "male" | "female",
       );
@@ -776,7 +782,7 @@ registerGenerator(
   },
   async ({ bankName }) => {
     try {
-      const bankAccount = faker.bankAccount(bankName as string);
+      const bankAccount = generateBankAccount(bankName as string);
       return {
         content: [{ type: "text", text: JSON.stringify(bankAccount, null, 2) }],
       };
