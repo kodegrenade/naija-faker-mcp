@@ -26,7 +26,7 @@ Add to your Claude Desktop config at:
 
 | Tool | Description |
 | --- | --- |
-| generate_person | Generate a fake person with Nigerian characteristics. |
+| generate_person | Generate one basic composite person record with identity and contact fields: title, name, email, phone, and address. Use atomic tools for individual attributes. |
 | generate_address | Generate a fake Nigerian address. |
 | generate_phone_number | Generate a fake Nigerian phone number. |
 | generate_lgas | Generate fake Nigerian LGAs. |
@@ -35,25 +35,25 @@ Add to your Claude Desktop config at:
 | generate_nin | Generate a fake Nigerian NIN. |
 | generate_bvn | Generate a fake Nigerian BVN. |
 | generate_license_plate | Generate a fake Nigerian license plate. |
-| generate_people | Generate a list of fake Nigerian people. |
+| generate_people | Generate an array of basic composite person records. Defaults to 10 records. |
 | generate_title | Generate a fake Nigerian title. |
 | generate_name | Generate a fake Nigerian name. |
 | generate_vehicle_record | Generate a fake Nigerian vehicle record. |
-| generate_company | Genereate a fake Nigerian company. |
+| generate_company | Generate a fake Nigerian company. |
 | generate_university | Generate a fake Nigerian university |
 | generate_education_record | Generate a fake Nigerian education record |
 | generate_work_record | Generate a fake Nigerian work record |
-| generate_detailed_person | Generate a fake Nigerian person with detailed information |
-| generate_detailed_people | Generate a list of fake Nigerian people with detailed information |
+| generate_detailed_person | Generate one detailed composite record containing a consistent person plus date of birth, marital, health, financial, kin, education, work, and vehicle fields. |
+| generate_detailed_people | Generate an array of detailed composite person records. Defaults to 1 record. |
 | generate_date_of_birth | Generate a fake date of birth |
-| genereate_marital_status | Genereate a fake marital status |
+| generate_marital_status | Generate a fake marital status |
 | generate_blood_group | Generate a fake blood group |
 | generate_genotype | Generate a fake genotype |
 | generate_salary | Generate a fake salary |
 | generate_next_of_kin | Generate a fake Nigerian next of kin |
 | generate_bank_account | Generate a fake Nigerian bank account |
-| generate_consistent_person | Generate a fake Nigerian person with consistent data |
-| generate_consistent_people | Generate a list of fake Nigerian people with consistent data |
+| generate_consistent_person | Generate one basic composite person record plus geographically coherent state and LGA fields. |
+| generate_consistent_people | Generate an array of geographically consistent composite person records. Defaults to 10 records. |
 
 ### Development
 
