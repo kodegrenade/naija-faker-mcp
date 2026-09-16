@@ -28,6 +28,15 @@ import {
   generatePeople,
   generatePerson,
 } from "./tools/person.js";
+import {
+  generateAddress,
+  generateBvn,
+  generateEmail,
+  generateName,
+  generateNin,
+  generatePhoneNumber,
+  generateTitle,
+} from "./tools/identity.js";
 
 const server = new McpServer({
   name: "Naija Faker Library",
@@ -121,7 +130,7 @@ registerGenerator(
   },
   async ({ gender }) => {
     try {
-      const title = faker.title(gender as "male" | "female");
+      const title = generateTitle(gender as "male" | "female");
       return {
         content: [{ type: "text", text: title }],
       };
@@ -155,7 +164,7 @@ registerGenerator(
   },
   async ({ language, gender }) => {
     try {
-      const name = faker.name(
+      const name = generateName(
         language as "yoruba" | "igbo" | "hausa",
         gender as "male" | "female",
       );
@@ -187,7 +196,7 @@ registerGenerator(
   },
   async ({ network }) => {
     try {
-      const phone = faker.phoneNumber(
+      const phone = generatePhoneNumber(
         network as "mtn" | "glo" | "airtel" | "9mobile",
       );
       return {
@@ -214,7 +223,7 @@ registerGenerator(
   },
   async ({ name }) => {
     try {
-      const email = faker.email(name as string);
+      const email = generateEmail(name as string);
       return {
         content: [{ type: "text", text: email }],
       };
@@ -236,7 +245,7 @@ registerGenerator(
   },
   async () => {
     try {
-      const address = faker.address();
+      const address = generateAddress();
       return {
         content: [{ type: "text", text: address }],
       };
@@ -258,7 +267,7 @@ registerGenerator(
   },
   async () => {
     try {
-      const bvn = faker.bvn();
+      const bvn = generateBvn();
       return {
         content: [{ type: "text", text: bvn }],
       };
@@ -280,7 +289,7 @@ registerGenerator(
   },
   async () => {
     try {
-      const nin = faker.nin();
+      const nin = generateNin();
       return {
         content: [{ type: "text", text: nin }],
       };
