@@ -1,3 +1,4 @@
+import faker from "@codegrenade/naija-faker";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type {
@@ -50,7 +51,32 @@ export function createGeneratorRegistrar(
     handler: (...args: any[]) => any,
   ) {
     const wrappedHandler = async (...args: any[]) => {
-      const result = await handler(...args);
+      // Tools that accept a seed opt in via their inputSchema; seeding is reset
+      // afterwards so one reproducible call never makes later calls deterministic.
+      const seed = args[0]?.seed;
+      let result: any;
+      try {
+        if (typeof seed === "number") {
+          faker.seed(seed);
+        }
+        result = await handler(...args);
+      } catch (error) {
+        const code = (error as { code?: string })?.code;
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: code ? `${code}: ${message}` : `Error: ${message}`,
+            },
+          ],
+          isError: true,
+        };
+      } finally {
+        if (typeof seed === "number") {
+          faker.seed();
+        }
+      }
 
       if (
         result?.isError ||

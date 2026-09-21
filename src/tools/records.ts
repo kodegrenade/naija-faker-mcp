@@ -1,6 +1,8 @@
 import faker from "@codegrenade/naija-faker";
 
 type Language = "yoruba" | "igbo" | "hausa";
+type ExportType = "person" | "detailedPerson" | "consistentPerson";
+type ExportFormat = "json" | "csv";
 
 export function generateVehicleRecord(state?: string) {
   return faker.vehicleRecord(state);
@@ -18,12 +20,12 @@ export function generateUniversity() {
   return faker.university();
 }
 
-export function generateEducationRecord(language?: Language) {
-  return faker.educationRecord(language);
+export function generateEducationRecord(language?: Language, age?: number) {
+  return faker.educationRecord(language, age);
 }
 
-export function generateWorkRecord() {
-  return faker.workRecord();
+export function generateWorkRecord(age?: number, graduationYear?: number) {
+  return faker.workRecord(age, graduationYear);
 }
 
 export function generateStates() {
@@ -32,4 +34,12 @@ export function generateStates() {
 
 export function generateLgas() {
   return faker.lgas();
+}
+
+export function generateExport(
+  type?: ExportType,
+  count?: number,
+  format?: ExportFormat,
+) {
+  return faker.export(type, count, format);
 }

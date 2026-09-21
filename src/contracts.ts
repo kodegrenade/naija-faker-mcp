@@ -3,6 +3,7 @@ import { z } from "zod";
 export const languageSchema = z.enum(["hausa", "igbo", "yoruba"]);
 export const genderSchema = z.enum(["male", "female"]);
 export const networkSchema = z.enum(["mtn", "glo", "airtel", "9mobile"]);
+export const regionSchema = z.enum(["east", "west", "north", "south"]);
 export const salaryLevelSchema = z.enum([
   "entry",
   "mid",
@@ -11,6 +12,8 @@ export const salaryLevelSchema = z.enum([
 ]);
 export const countSchema = z.number().int().min(1);
 export const ageSchema = z.number().int().min(0);
+export const yearSchema = z.number().int();
+export const seedSchema = z.number().int();
 
 export const personOutputSchema = z.object({
   title: z.string(),
@@ -25,6 +28,26 @@ export const personOutputSchema = z.object({
 export const consistentPersonOutputSchema = personOutputSchema.extend({
   state: z.string(),
   lga: z.string().nullable(),
+  language: languageSchema,
+  region: regionSchema,
+});
+
+export const educationRecordOutputSchema = z.object({
+  university: z.string(),
+  abbreviation: z.string(),
+  degree: z.string(),
+  discipline: z.string(),
+  course: z.string(),
+  graduationYear: z.number(),
+});
+
+export const workRecordOutputSchema = z.object({
+  company: z.string(),
+  position: z.string(),
+  industry: z.string(),
+  startYear: z.number(),
+  yearsOfExperience: z.number(),
+  level: salaryLevelSchema,
 });
 
 export const detailedPersonOutputSchema = consistentPersonOutputSchema.extend({
@@ -44,19 +67,9 @@ export const detailedPersonOutputSchema = consistentPersonOutputSchema.extend({
     phone: z.string(),
     address: z.string(),
   }),
-  education: z.object({
-    university: z.string(),
-    abbreviation: z.string(),
-    degree: z.string(),
-    course: z.string(),
-    graduationYear: z.number(),
-  }),
-  work: z.object({
-    company: z.string(),
-    position: z.string(),
-    industry: z.string(),
-    startYear: z.number(),
-  }),
+  // null when the person is too young to have finished a qualification
+  education: educationRecordOutputSchema.nullable(),
+  work: workRecordOutputSchema,
   vehicle: z.object({
     licensePlate: z.string(),
     make: z.string(),

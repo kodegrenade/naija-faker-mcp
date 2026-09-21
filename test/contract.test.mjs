@@ -37,6 +37,7 @@ const expectedToolNames = [
   "generate_bank_account",
   "generate_consistent_person",
   "generate_consistent_people",
+  "export_records",
 ];
 
 before(async () => {
@@ -139,6 +140,7 @@ test("invokes every tool family successfully", async () => {
     ["generate_bank_account", {}],
     ["generate_consistent_person", { language: "hausa", gender: "male" }],
     ["generate_consistent_people", { count: 1 }],
+    ["export_records", { type: "person", count: 2, format: "csv" }],
   ];
 
   for (const [name, arguments_] of calls) {
@@ -178,6 +180,85 @@ test("provides a structured fallback for atomic tool results", async () => {
   });
   assert.equal(result.isError, undefined);
   assert.equal(typeof result.structuredContent.value, "object");
+});
+
+test("carries the v2 consistency fields on consistent persons", async () => {
+  const result = await client.callTool({
+    name: "generate_consistent_person",
+    arguments: { language: "igbo", gender: "male" },
+  });
+  assert.equal(result.isError, undefined);
+  assert.equal(result.structuredContent.language, "igbo");
+  assert.ok(
+    ["east", "west", "north", "south"].includes(result.structuredContent.region),
+  );
+});
+
+test("returns a null education record for people too young to have one", async () => {
+  const result = await client.callTool({
+    name: "generate_detailed_person",
+    arguments: { language: "yoruba", minAge: 18, maxAge: 19 },
+  });
+  assert.equal(result.isError, undefined);
+  assert.equal(result.structuredContent.education, null);
+  assert.equal(typeof result.structuredContent.work.yearsOfExperience, "number");
+
+  const atomic = await client.callTool({
+    name: "generate_education_record",
+    arguments: { language: "yoruba", age: 18 },
+  });
+  assert.equal(atomic.isError, undefined);
+  assert.equal(atomic.structuredContent.value, null);
+});
+
+test("keeps the library's default age range when no bounds are given", async () => {
+  const ages = [];
+  // Enough samples that a regression to the wider 18-65 range cannot slip through.
+  for (let i = 0; i < 60; i++) {
+    const result = await client.callTool({
+      name: "generate_detailed_person",
+      arguments: { language: "yoruba" },
+    });
+    assert.equal(result.isError, undefined);
+    ages.push(result.structuredContent.dateOfBirth.age);
+    // Within the default range everyone is old enough to hold a qualification.
+    assert.notEqual(result.structuredContent.education, null);
+  }
+  assert.ok(
+    Math.min(...ages) >= 22,
+    `default range leaked below 22: got ${Math.min(...ages)}`,
+  );
+});
+
+test("produces reproducible output for a given seed without leaking it", async () => {
+  const call = (args) =>
+    client.callTool({ name: "generate_person", arguments: args });
+
+  const first = await call({ language: "yoruba", gender: "female", seed: 4242 });
+  const second = await call({ language: "yoruba", gender: "female", seed: 4242 });
+  assert.deepEqual(first.structuredContent, second.structuredContent);
+
+  // The seed must be reset afterwards, so an unseeded call is not pinned to it.
+  const unseeded = await Promise.all(
+    Array.from({ length: 5 }, () =>
+      call({ language: "yoruba", gender: "female" }),
+    ),
+  );
+  assert.ok(
+    unseeded.some(
+      (r) => r.structuredContent.fullName !== first.structuredContent.fullName,
+    ),
+    "unseeded calls stayed pinned to the previous seed",
+  );
+});
+
+test("surfaces machine-readable error codes from the library", async () => {
+  const result = await client.callTool({
+    name: "generate_license_plate",
+    arguments: { state: "Atlantis" },
+  });
+  assert.equal(result.isError, true);
+  assert.match(result.content[0].text, /INVALID_STATE/);
 });
 
 test("exposes the package documentation resource", async () => {

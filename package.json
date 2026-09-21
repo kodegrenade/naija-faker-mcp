@@ -1,6 +1,6 @@
 {
   "name": "@codegrenade/naija-faker-mcp",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "A naija-faker MCP server",
   "type": "module",
   "scripts": {
@@ -41,7 +41,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@codegrenade/naija-faker": "^1.0.6",
+    "@codegrenade/naija-faker": "^2.0.0",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "zod": "^4.3.6"
   },

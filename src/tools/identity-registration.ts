@@ -1,6 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { genderSchema, languageSchema, networkSchema } from "../contracts.js";
+import {
+  genderSchema,
+  languageSchema,
+  networkSchema,
+  regionSchema,
+} from "../contracts.js";
 import { createGeneratorRegistrar } from "../registration.js";
 import {
   generateAddress,
@@ -66,9 +71,13 @@ export function registerIdentityTools(server: McpServer) {
     "generate_address",
     {
       title: "Generate a fake address",
-      description: "Generates a synthetic Nigerian address.",
+      description:
+        "Generates a synthetic Nigerian address. Pass a region to place it in that part of the country.",
+      inputSchema: { region: regionSchema.optional() },
     },
-    async () => ({ content: [{ type: "text", text: generateAddress() }] }),
+    async ({ region }) => ({
+      content: [{ type: "text", text: generateAddress(region) }],
+    }),
   );
   register(
     "generate_bvn",

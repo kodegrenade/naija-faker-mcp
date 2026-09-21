@@ -1,10 +1,17 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { languageSchema } from "../contracts.js";
+import {
+  ageSchema,
+  countSchema,
+  languageSchema,
+  seedSchema,
+  yearSchema,
+} from "../contracts.js";
 import { createGeneratorRegistrar } from "../registration.js";
 import {
   generateCompany,
   generateEducationRecord,
+  generateExport,
   generateLicensePlate,
   generateLgas,
   generateStates,
@@ -70,14 +77,20 @@ export function registerRecordsTools(server: McpServer) {
     "generate_education_record",
     {
       title: "Generate an education record",
-      description: "Generates a synthetic education record.",
-      inputSchema: { language: languageSchema.optional() },
+      description:
+        "Generates a synthetic education record. Pass an age and the degree is one the person lived long enough to earn, with a course that fits the degree's discipline. Returns null when the age is too young to have finished a qualification.",
+      inputSchema: {
+        language: languageSchema.optional(),
+        age: ageSchema
+          .optional()
+          .describe("Age of the person the record belongs to"),
+      },
     },
-    async ({ language }) => ({
+    async ({ language, age }) => ({
       content: [
         {
           type: "text",
-          text: JSON.stringify(generateEducationRecord(language), null, 2),
+          text: JSON.stringify(generateEducationRecord(language, age), null, 2),
         },
       ],
     }),
@@ -86,11 +99,27 @@ export function registerRecordsTools(server: McpServer) {
     "generate_work_record",
     {
       title: "Generate a work record",
-      description: "Generates a synthetic work record.",
+      description:
+        "Generates a synthetic work record. Pass an age and graduation year and the job starts after the degree, with seniority, position, and salary band following years of experience.",
+      inputSchema: {
+        age: ageSchema
+          .optional()
+          .describe("Age of the person the record belongs to"),
+        graduationYear: yearSchema
+          .optional()
+          .describe("Year the person graduated; employment starts after it"),
+      },
     },
-    async () => ({
+    async ({ age, graduationYear }) => ({
       content: [
-        { type: "text", text: JSON.stringify(generateWorkRecord(), null, 2) },
+        {
+          type: "text",
+          text: JSON.stringify(
+            generateWorkRecord(age, graduationYear),
+            null,
+            2,
+          ),
+        },
       ],
     }),
   );
@@ -116,6 +145,33 @@ export function registerRecordsTools(server: McpServer) {
       content: [
         { type: "text", text: JSON.stringify(generateLgas(), null, 2) },
       ],
+    }),
+  );
+  register(
+    "export_records",
+    {
+      title: "Export records in bulk",
+      description:
+        "Generates a batch of synthetic person records as a single JSON or CSV payload. Use this instead of repeated single-record calls when producing a dataset or fixture file. Nested fields are flattened in CSV.",
+      inputSchema: {
+        type: z
+          .enum(["person", "detailedPerson", "consistentPerson"])
+          .optional()
+          .describe("The kind of record to export"),
+        count: countSchema
+          .optional()
+          .describe("The number of records to export"),
+        format: z
+          .enum(["json", "csv"])
+          .optional()
+          .describe("Output format; defaults to json"),
+        seed: seedSchema
+          .optional()
+          .describe("Seed for a reproducible export batch"),
+      },
+    },
+    async ({ type, count, format }) => ({
+      content: [{ type: "text", text: generateExport(type, count, format) }],
     }),
   );
 }
