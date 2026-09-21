@@ -8,8 +8,8 @@ export function generateDateOfBirth(minAge: number, maxAge: number) {
   return faker.dateOfBirth({ minAge, maxAge });
 }
 
-export function generateMaritalStatus() {
-  return faker.maritalStatus();
+export function generateMaritalStatus(age?: number) {
+  return faker.maritalStatus(age);
 }
 
 export function generateBloodGroup() {

@@ -46,10 +46,12 @@ export function registerProfileTools(server: McpServer) {
     "generate_marital_status",
     {
       title: "Generate marital status",
-      description: "Generates a synthetic marital status.",
+      description:
+        "Generates a synthetic marital status. Pass an age to rule out statuses implausible for it.",
+      inputSchema: { age: ageSchema.optional() },
     },
-    async () => ({
-      content: [{ type: "text", text: generateMaritalStatus() }],
+    async ({ age }) => ({
+      content: [{ type: "text", text: generateMaritalStatus(age) }],
     }),
   );
   register(

@@ -3,6 +3,7 @@ import faker from "@codegrenade/naija-faker";
 type Language = "yoruba" | "igbo" | "hausa";
 type Gender = "male" | "female";
 type Network = "mtn" | "glo" | "airtel" | "9mobile";
+type Region = "east" | "west" | "north" | "south";
 
 export function generateTitle(gender?: Gender) {
   return faker.title(gender);
@@ -20,8 +21,8 @@ export function generateEmail(name?: string) {
   return faker.email(name);
 }
 
-export function generateAddress() {
-  return faker.address();
+export function generateAddress(region?: Region) {
+  return faker.address(region);
 }
 
 export function generateBvn() {

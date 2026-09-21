@@ -27,7 +27,7 @@ Add to your Claude Desktop config at:
 | Tool | Description |
 | --- | --- |
 | generate_person | Generate one basic composite person record with identity and contact fields: title, name, email, phone, and address. Use atomic tools for individual attributes. |
-| generate_address | Generate a fake Nigerian address. |
+| generate_address | Generate a fake Nigerian address. Accepts an optional region (east, west, north, south). |
 | generate_phone_number | Generate a fake Nigerian phone number. |
 | generate_lgas | Generate fake Nigerian LGAs. |
 | generate_states | Generate fake Nigerian states. |
@@ -41,19 +41,22 @@ Add to your Claude Desktop config at:
 | generate_vehicle_record | Generate a fake Nigerian vehicle record. |
 | generate_company | Generate a fake Nigerian company. |
 | generate_university | Generate a fake Nigerian university |
-| generate_education_record | Generate a fake Nigerian education record |
-| generate_work_record | Generate a fake Nigerian work record |
-| generate_detailed_person | Generate one detailed composite record containing a consistent person plus date of birth, marital, health, financial, kin, education, work, and vehicle fields. |
-| generate_detailed_people | Generate an array of detailed composite person records. Defaults to 1 record. |
+| generate_education_record | Generate a fake Nigerian education record. Accepts an optional age; returns null when the person is too young to have finished a qualification. |
+| generate_work_record | Generate a fake Nigerian work record. Accepts an optional age and graduation year, so employment starts after the degree. |
+| generate_detailed_person | Generate one detailed composite record containing a consistent person plus date of birth, marital, health, financial, kin, education, work, and vehicle fields. Accepts optional minAge and maxAge (defaults to 22-65). |
+| generate_detailed_people | Generate an array of detailed composite person records. Defaults to 1 record. Accepts optional minAge and maxAge. |
 | generate_date_of_birth | Generate a fake date of birth |
-| generate_marital_status | Generate a fake marital status |
+| generate_marital_status | Generate a fake marital status. Accepts an optional age to rule out implausible statuses. |
 | generate_blood_group | Generate a fake blood group |
 | generate_genotype | Generate a fake genotype |
 | generate_salary | Generate a fake salary |
 | generate_next_of_kin | Generate a fake Nigerian next of kin |
 | generate_bank_account | Generate a fake Nigerian bank account |
-| generate_consistent_person | Generate one basic composite person record plus geographically coherent state and LGA fields. |
+| generate_consistent_person | Generate one basic composite person record plus geographically coherent state, LGA, language, and region fields. |
 | generate_consistent_people | Generate an array of geographically consistent composite person records. Defaults to 10 records. |
+| export_records | Generate a batch of person records as a single JSON or CSV payload. Use instead of repeated calls when producing a dataset or fixture file. |
+
+Person tools also accept an optional `seed` for reproducible output — the same seed returns the same record. Seeding is scoped to the single call and reset afterwards.
 
 ### Development
 
